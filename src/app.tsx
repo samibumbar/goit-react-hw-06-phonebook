@@ -1,44 +1,31 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
+import { useSelector, useDispatch } from "react-redux";
+import { RootState } from "./store";
+import { addContact, deleteContact, setFilter } from "./contactsSlice";
 import { nanoid } from "nanoid";
 import { ContactForm, Filter, ContactList } from "./components";
 import styles from "./app.module.css";
 
-interface Contact {
-  id: string;
-  name: string;
-  number: string;
-}
-
 const App: React.FC = () => {
-  const [contacts, setContacts] = useState<Contact[]>([]);
-  const [filter, setFilter] = useState("");
+  const contacts = useSelector((state: RootState) => state.contacts.contacts);
+  const filter = useSelector((state: RootState) => state.contacts.filter);
+  const dispatch = useDispatch();
 
-  useEffect(() => {
-    const savedContacts = localStorage.getItem("contacts");
-    if (savedContacts) {
-      setContacts(JSON.parse(savedContacts));
-    }
-  }, []);
-
-  useEffect(() => {
-    localStorage.setItem("contacts", JSON.stringify(contacts));
-  }, [contacts]);
-
-  const addContact = (name: string, number: string) => {
+  const handleAddContact = (name: string, number: string) => {
     if (contacts.some((contact) => contact.name === name)) {
       alert(`${name} is already in contacts.`);
       return;
     }
-    const newContact: Contact = {
-      id: nanoid(),
-      name,
-      number,
-    };
-    setContacts((prev) => [...prev, newContact]);
+    const newContact = { id: nanoid(), name, number };
+    dispatch(addContact(newContact));
   };
 
-  const deleteContact = (id: string) => {
-    setContacts((prev) => prev.filter((contact) => contact.id !== id));
+  const handleDeleteContact = (id: string) => {
+    dispatch(deleteContact(id));
+  };
+
+  const handleFilterChange = (filter: string) => {
+    dispatch(setFilter(filter));
   };
 
   const filteredContacts = contacts.filter((contact) =>
@@ -48,10 +35,10 @@ const App: React.FC = () => {
   return (
     <div className={styles.container}>
       <h1 className={styles.h1}>Phonebook</h1>
-      <ContactForm onSubmit={addContact} />
+      <ContactForm onSubmit={handleAddContact} />
       <h2 className={styles.h2}>Contacts</h2>
-      <Filter filter={filter} onChange={setFilter} />
-      <ContactList contacts={filteredContacts} onDelete={deleteContact} />
+      <Filter filter={filter} onChange={handleFilterChange} />
+      <ContactList contacts={filteredContacts} onDelete={handleDeleteContact} />
     </div>
   );
 };
